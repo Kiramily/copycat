@@ -1,0 +1,29 @@
+cargo-features = ["different-binary-name"]
+
+[package]
+name = "copycat"
+version = "0.1.0"
+edition = "2021"
+
+
+[[bin]]
+name = "copycat"
+# Windows build complains because copycat.pdb already exists
+# So we change the name of the binary to cls_copycat to avoid the warning.
+filename = "cls_copycat"
+required-features = ["bin"]
+path = "src/main.rs"
+
+[features]
+default = []
+bin = ["clap"]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+bitflags = "1.3.2"
+rayon = "1.5.3"
+clap = { version = "3.1.18", optional = true }
+env_logger = "0.9.0"
+log = "0.4.17"
