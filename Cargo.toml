@@ -1,0 +1,18 @@
+[package]
+name = "copycat"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "copykitty"
+path = "src/lib.rs"
+
+[[bin]]
+name = "copycat"
+path = "src/copycat.rs"
+
+
+[dependencies]
+clap = "4.2.2"
+num_cpus = "1.15.0"
+rayon = "1.7.0"
