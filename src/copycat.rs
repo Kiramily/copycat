@@ -24,6 +24,10 @@ fn main() {
         )
         .get_matches();
 
+    let subscriber = tracing_subscriber::fmt().compact().finish();
+
+    tracing::subscriber::set_global_default(subscriber).ok();
+
     let source = args.get_one::<PathBuf>("source").unwrap();
     let destination = args.get_one::<PathBuf>("destination").unwrap();
     let threads: Option<usize> = args.get_one::<usize>("threads").map(ToOwned::to_owned);

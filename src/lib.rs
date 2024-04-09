@@ -1,13 +1,16 @@
+use rayon::ThreadPoolBuilder;
 use std::{
-    error::Error,
     fs::{self, create_dir_all, read_dir},
     io::{self, ErrorKind},
     path::Path,
 };
+use tracing::{debug, error, info};
 
-use rayon::ThreadPoolBuilder;
-
-pub fn copy<P: AsRef<Path>>(from: P, to: P, threads: Option<usize>) -> Result<(), Box<dyn Error>> {
+pub fn copy<P: AsRef<Path>>(
+    from: P,
+    to: P,
+    threads: Option<usize>,
+) -> Result<(), Box<dyn std::error::Error>> {
     let threads = threads.unwrap_or(num_cpus::get());
 
     let pool = ThreadPoolBuilder::new().num_threads(threads).build()?;
@@ -61,9 +64,9 @@ fn copy_file(file: &Path, destination: &Path) {
                 return;
             }
 
-            println!(
-                "removing {} because of unmatched modified dates and different file sizes",
-                destination.display()
+            debug!(
+                ?destination,
+                "removing because of unmatched modified dates and different file sizes"
             );
             fs::remove_file(destination).unwrap_or_else(|_| {
                 panic!(
@@ -74,21 +77,16 @@ fn copy_file(file: &Path, destination: &Path) {
         }
     }
 
-    println!("Copying file: {}", file.display());
+    info!(?file, "Copying file");
 
     match fs::copy(file, destination) {
         Ok(_) => {}
         Err(e) => match e.kind() {
-            ErrorKind::PermissionDenied => eprintln!(
-                "Permission Denied to copy file \"{}\" to \"{}\"",
-                file.display(),
-                destination.display()
-            ),
-            ErrorKind::AlreadyExists => eprintln!(
-                "The destination \"{}\" already exists",
-                destination.display()
-            ),
-            _ => eprintln!("Error while copying: {e}"),
+            ErrorKind::PermissionDenied => {
+                error!(?file, ?destination, "Permission Denied to copy file")
+            }
+            ErrorKind::AlreadyExists => error!(?destination, "The destination already exists"),
+            _ => error!(?e, "An Error occurred while copying"),
         },
     }
 }
