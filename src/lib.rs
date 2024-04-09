@@ -59,15 +59,8 @@ fn copy_file(file: &Path, destination: &Path) {
         if dest_meta.modified().unwrap() == file_meta.modified().unwrap() {
             return;
         } else {
-            if dest_meta.len() == file_meta.len() {
-                // Do nothing when the files are the same size
-                return;
-            }
+            debug!(?destination, "removing because of unmatched modified dates");
 
-            debug!(
-                ?destination,
-                "removing because of unmatched modified dates and different file sizes"
-            );
             fs::remove_file(destination).unwrap_or_else(|_| {
                 panic!(
                     "Failed to remove file: {} with unmatched modified dates",
