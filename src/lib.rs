@@ -1,8 +1,9 @@
 use rayon::ThreadPoolBuilder;
 use std::{
-    fs::{self, create_dir_all, read_dir},
+    fs::{self, create_dir_all, read_dir, File, FileTimes},
     io::{self, ErrorKind},
     path::Path,
+    time::{Duration, SystemTime},
 };
 use tracing::{debug, error, info};
 
@@ -73,7 +74,9 @@ fn copy_file(file: &Path, destination: &Path) {
     info!(?file, "Copying file");
 
     match fs::copy(file, destination) {
-        Ok(_) => {}
+        Ok(_) => {
+            copy_filetimes(file, destination).unwrap();
+        }
         Err(e) => match e.kind() {
             ErrorKind::PermissionDenied => {
                 error!(?file, ?destination, "Permission Denied to copy file")
@@ -82,4 +85,19 @@ fn copy_file(file: &Path, destination: &Path) {
             _ => error!(?e, "An Error occurred while copying"),
         },
     }
+}
+
+fn copy_filetimes<F: AsRef<Path>, T: AsRef<Path>>(from: F, to: T) -> io::Result<()> {
+    let metadata = fs::metadata(from)?;
+    let file = File::open(to)?;
+
+    let times = FileTimes::new()
+        .set_accessed(metadata.accessed()?)
+        .set_modified(metadata.modified()?);
+
+    file.set_times(times)?;
+
+    drop(file);
+
+    Ok(())
 }
